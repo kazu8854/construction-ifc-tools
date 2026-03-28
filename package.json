@@ -1,0 +1,29 @@
+{
+  "name": "construction-ifc-tools",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:mock": "npm run dev:mock --workspaces --if-present",
+    "dev:aws": "npm run dev:aws --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "deploy": "npm run build && npm run deploy --workspace=infrastructure",
+    "prepare": "husky",
+    "secretlint": "secretlint '**/*'"
+  },
+  "lint-staged": {
+    "*": [
+      "secretlint"
+    ]
+  },
+  "devDependencies": {
+    "@secretlint/core": "^11.4.0",
+    "@secretlint/secretlint-rule-preset-recommend": "^11.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "secretlint": "^11.4.0"
+  }
+}

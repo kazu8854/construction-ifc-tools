@@ -1,0 +1,28 @@
+{
+  "name": "@construction-ifc-tools/backend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "dev:mock": "MOCK_AWS=true npx tsx watch src/dev.ts",
+    "dev:aws": "npx tsx watch src/dev.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js",
+    "test": "MOCK_AWS=true vitest run",
+    "test:coverage": "MOCK_AWS=true vitest run --coverage"
+  },
+  "dependencies": {
+    "@construction-ifc-tools/shared": "*",
+    "@hono/node-server": "^1.19.11",
+    "hono": "^4.2.4"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.137",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^4.1.2",
+    "esbuild": "^0.20.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.2"
+  }
+}

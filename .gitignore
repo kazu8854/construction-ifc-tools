@@ -1,0 +1,56 @@
+# === Dependencies ===
+node_modules/
+
+# Mock data (local development persistence)
+mock-storage/
+
+# === Build output ===
+dist/
+build/
+*.tsbuildinfo
+
+# === Environment variables / Secrets ===
+.env
+.env.*
+!.env.example
+
+# === AWS CDK ===
+cdk.out/
+.cdk.staging/
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Editor / IDE ===
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# === Logs ===
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Test / Coverage ===
+coverage/
+.nyc_output/
+
+# === Source maps ===
+*.js.map
+
+# === TypeScript compiled output (source is .ts) ===
+packages/infrastructure/**/*.js
+packages/infrastructure/**/*.d.ts
+packages/shared/**/*.js
+packages/shared/**/*.d.ts
+!packages/infrastructure/jest.config.js
+
+# === Temporary files ===
+*.tmp
+*.bak
