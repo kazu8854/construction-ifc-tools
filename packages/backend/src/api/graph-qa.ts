@@ -1,18 +1,23 @@
 import { Hono } from 'hono';
 import type { GraphPort } from '../adapters/graph-port';
 import type { AiPort } from '../adapters/ai-port';
+import type { MetadataDbPort } from '../adapters/metadata-db-port';
+import type { StoragePort } from '../adapters/storage-port';
 import { GraphQaRequestSchema } from '@construction-ifc-tools/shared';
 
-// === Graph Q&A API Route (Phase 4 - Optional) ===
-// Handles natural language questions about IFC data stored in a graph database.
-// In production: queries Neptune, then feeds context to Bedrock Claude 4.5 Sonnet.
-// In mock: queries local JSON graph, then uses MockAI for response.
+// === Graph Q&A API Route (Phase 4) ===
+// Mock: JSON graph files + web-ifc IFC→graph convert. Production: Neptune + Bedrock.
 
 import { MockGraphAdapter } from '../adapters/mock-graph-adapter';
+import { MockMetadataDbAdapter } from '../adapters/mock-metadata-db-adapter';
+import { MockStorageAdapter } from '../adapters/mock-storage-adapter';
 import { createAiPort } from '../adapters/resolve-ai-port';
+import { extractGraphFromIfc } from '../services/ifc-to-graph';
 
 const isMock = process.env.MOCK_AWS === 'true';
-const graph: GraphPort = isMock ? new MockGraphAdapter() : new MockGraphAdapter(); // TODO: replace with NeptuneAdapter
+const graph: GraphPort = isMock ? new MockGraphAdapter() : new MockGraphAdapter(); // TODO: NeptuneAdapter
+const metadataDb: MetadataDbPort = isMock ? new MockMetadataDbAdapter() : new MockMetadataDbAdapter();
+const storage: StoragePort = isMock ? new MockStorageAdapter() : new MockStorageAdapter();
 const ai: AiPort = createAiPort();
 
 export const graphQaApp = new Hono()
@@ -50,11 +55,34 @@ export const graphQaApp = new Hono()
     }, 200);
   })
 
-  // POST /api/graph/convert/:fileId - Convert IFC to graph
+  // POST /api/graph/convert/:fileId - Convert IFC to graph (web-ifc → JSON in mock)
   .post('/convert/:fileId', async (c) => {
-    // TODO: Implement IFC parsing → graph node/edge extraction
-    // Uses web-ifc to parse the IFC file and extract spatial relationships
-    return c.json({ success: false, error: 'Not yet implemented. See Phase 4 in README.' }, 501);
+    const fileId = c.req.param('fileId');
+    const file = await metadataDb.getFile(fileId);
+    if (!file) {
+      return c.json({ success: false, error: 'File not found' }, 404);
+    }
+    try {
+      const buf = await storage.getFile(file.storageKey);
+      const { nodes, edges } = await extractGraphFromIfc(buf);
+      await graph.saveGraph(fileId, nodes, edges);
+      const summary = await graph.getSummary(fileId);
+      return c.json(
+        {
+          success: true,
+          data: {
+            fileId,
+            nodeCount: nodes.length,
+            edgeCount: edges.length,
+            summary,
+          },
+        },
+        201,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'IFC to graph conversion failed';
+      return c.json({ success: false, error: msg }, 422);
+    }
   })
 
   // GET /api/graph/summary/:fileId - Get graph summary

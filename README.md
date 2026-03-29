@@ -19,7 +19,7 @@
 | Phase 1 | IFCファイル管理 (Upload/List/Rename/Delete) | ✅ Mock/ローカル対応 |
 | Phase 2 | 3D Viewer（That Open + 検索連動表示） | ✅ Mock/ローカル対応 |
 | Phase 3 | AI IFC生成（本番: Bedrock / ローカル: Ollama） | ✅ Mock 固定 IFC + `USE_LOCAL_LLM=true` で Ollama（UI: `/ai-generate`） |
-| Phase 4 | GraphDB化 + AI Q&A (Neptune + Bedrock) | 🚧 スケルトン (Optional) |
+| Phase 4 | GraphDB化 + AI Q&A (Neptune + Bedrock) | ✅ Mock: web-ifc で IFC→JSON グラフ、`/graph-qa` UI、Q&A API |
 
 ### Phase 2（3D Viewer）でできること
 
@@ -28,7 +28,7 @@
 - **IFC タイプ名の部分一致検索** → ヒット一覧（ページング・文字絞り込み）と **IFC 種別ごとのチェック**で、3D を **絞り込み表示** または **全体のままハイライト**。
 - **web-ifc WASM** は `predev` / `prebuild` で `public/web-ifc/` にコピー（`packages/frontend/scripts/copy-web-ifc-wasm.mjs`）。
 
-階層ツリーによるナビゲーションや GraphDB 連携は **Phase 4** 以降の想定。
+階層ツリーによるナビゲーションは今後の拡張想定。**Phase 4（Mock）**では Graph Q&amp;A ページから IFC をグラフ化し、要素種別サマリーをコンテキストに AI へ質問できます。
 
 ### Phase 3（AI IFC 生成）の進め方
 

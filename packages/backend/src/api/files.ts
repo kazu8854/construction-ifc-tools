@@ -12,6 +12,7 @@ import type { StoragePort } from '../adapters/storage-port';
 // 4. Mount in src/index.ts via app.route('/api/<domain>', domainApp)
 
 // --- DI ---
+import { MockGraphAdapter } from '../adapters/mock-graph-adapter';
 import { MockMetadataDbAdapter } from '../adapters/mock-metadata-db-adapter';
 import { MockStorageAdapter } from '../adapters/mock-storage-adapter';
 
@@ -120,5 +121,6 @@ export const filesApp = new Hono()
 
     await storage.deleteFile(file.storageKey);
     await metadataDb.deleteFile(id);
+    await new MockGraphAdapter().deleteGraph(id);
     return c.json({ success: true }, 200);
   });

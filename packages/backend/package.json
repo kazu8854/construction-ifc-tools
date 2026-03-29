@@ -15,7 +15,8 @@
   "dependencies": {
     "@construction-ifc-tools/shared": "*",
     "@hono/node-server": "^1.19.11",
-    "hono": "^4.2.4"
+    "hono": "^4.2.4",
+    "web-ifc": "^0.0.77"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.137",
