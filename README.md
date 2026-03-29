@@ -18,7 +18,7 @@
 |-------|------|------|
 | Phase 1 | IFCファイル管理 (Upload/List/Rename/Delete) | ✅ Mock/ローカル対応 |
 | Phase 2 | 3D Viewer（That Open + 検索連動表示） | ✅ Mock/ローカル対応 |
-| Phase 3 | AI IFC生成（本番: Bedrock / ローカル: Ollama 想定） | 🚧 Mock 固定 IFC のみ（Ollama アダプタは未接続） |
+| Phase 3 | AI IFC生成（本番: Bedrock / ローカル: Ollama） | ✅ Mock 固定 IFC + `USE_LOCAL_LLM=true` で Ollama（UI: `/ai-generate`） |
 | Phase 4 | GraphDB化 + AI Q&A (Neptune + Bedrock) | 🚧 スケルトン (Optional) |
 
 ### Phase 2（3D Viewer）でできること
@@ -34,11 +34,11 @@
 
 | モード | 内容 | 状態 |
 |--------|------|------|
-| **Mock** | `POST /api/ai/generate` はプロンプトに関わらず **固定のミニ IFC** を返し、ストレージに保存する | ✅ 利用可 |
-| **Ollama（ローカル LLM）** | 同一 API で **実生成**するための環境。バックエンドの `AiPort` に Ollama 実装を差し込む | 🚧 環境は README 手順で用意可／**コード未接続** |
+| **Mock** | `POST /api/ai/generate` は **ビューア表示用の小型 IFC4**（テッセレーション立方体・buildingSMART 由来サンプル）を返す | ✅ 利用可 |
+| **Ollama（ローカル LLM）** | `USE_LOCAL_LLM=true` のとき `AiPort` が **Ollama**（`POST …/api/chat`）。同一 `POST /api/ai/generate` | ✅ 配線済み（`dev:mock:ollama` / IFC 向け `dev:mock:ollama:qwen`） |
 | **Bedrock** | Claude 4.5 Sonnet（本番想定） | 🚧 未配線 |
 
-先に **Ollama を入れておき**、続く実装で `USE_LOCAL_LLM` 等から切り替えられるようにする想定です。
+Ollama は **オフライン検証**用。本番品質・長文 STEP は Bedrock 想定です。
 
 ## アーキテクチャ
 
@@ -90,6 +90,9 @@ npm install
 # ターミナル1: バックエンド (http://localhost:3001)
 npm run dev:mock -w packages/backend
 
+# Ollama で実生成する場合（Ollama が 11434 で起動していること）
+# npm run dev:mock:ollama -w packages/backend
+
 # ターミナル2: フロントエンド (http://localhost:5173)
 npm run dev:mock -w packages/frontend
 ```
@@ -128,19 +131,35 @@ npm run test:coverage -w packages/frontend
 
 [Ollama](https://ollama.com/) は LLM を **ローカルの HTTP API**（既定 `http://127.0.0.1:11434`）として動かすツールです。AWS Bedrock なしで **生成品質の試行**や **プロンプト設計**をしたいときに使います。
 
-> **現状のコード**: `POST /api/ai/generate` は **Mock の固定 IFC** のみです。環境変数 `USE_LOCAL_LLM` は **バックエンドにまだ配線されていません**（Ollama 用 `AiPort` 実装は Phase 3 の続き）。以下は **先に環境だけ整える**ための手順です。
+> **バックエンド**: 既定は **Mock の固定 IFC**。`USE_LOCAL_LLM=true` のとき **Ollama**（`OLLAMA_HOST` / `OLLAMA_MODEL`）が使われます。以下は Ollama 本体のセットアップ手順です。
 
 ### 1. インストール
+
+**Linux / WSL で `install.sh` を使う場合**、新しい Ollama パッケージの展開に **zstd** が必要です。未導入だと次のように止まります:  
+`ERROR: This version requires zstd for extraction`
+
+```bash
+# Debian / Ubuntu / WSL (Ubuntu 系)
+sudo apt-get update && sudo apt-get install -y zstd
+
+# Fedora / RHEL 系
+# sudo dnf install zstd
+
+# Arch
+# sudo pacman -S zstd
+```
+
+その後もう一度インストールスクリプトを実行してください。
 
 | 環境 | 手順 |
 |------|------|
 | **公式ダウンロード** | https://ollama.com/download（Windows / macOS / Linux インストーラ） |
-| **Linux / WSL** | `curl -fsSL https://ollama.com/install.sh \| sh` |
+| **Linux / WSL** | 上記 `zstd` を入れたうえで `curl -fsSL https://ollama.com/install.sh \| sh` |
 | **macOS（Homebrew）** | `brew install ollama` |
 
 ### 2. サービス起動
 
-インストール直後は多くの環境で **バックグラウンド起動**されます。応答がない場合は別ターミナルで:
+インストール直後は多くの環境で **バックグラウンド起動**されます。`ollama serve` で `address already in use` になる場合は **すでに 11434 で待ち受けている**ので、そのまま `curl http://127.0.0.1:11434/api/tags` で確認できます。応答がない場合だけ手動で:
 
 ```bash
 ollama serve
@@ -149,12 +168,11 @@ ollama serve
 ### 3. モデル取得
 
 ```bash
-# 比較的軽量（README従来の例）
+# 比較的軽量
 ollama pull llama3.2
 
-# STEP のような構造化テキスト生成を試す場合の例（任意・マシンスペックに応じて）
-# ollama pull qwen2.5-coder:7b
-# ollama pull codellama
+# IFC / コード寄りの構造化テキスト生成向け（このリポジトリの AI 生成では推奨）
+ollama pull qwen2.5-coder:7b
 ```
 
 ### 4. 動作確認
@@ -174,14 +192,29 @@ curl -s http://127.0.0.1:11434/api/generate -d '{
 }' -H "Content-Type: application/json"
 ```
 
-### 6. バックエンド連携（予定）
+### 6. バックエンド連携
 
-- **想定環境変数**: `USE_LOCAL_LLM=true`、必要なら `OLLAMA_HOST`（既定 `http://127.0.0.1:11434`）、`OLLAMA_MODEL`（例: `llama3.2`）
-- **想定起動例**（アダプタ実装後）:
+| 環境変数 | 説明 |
+|----------|------|
+| `USE_LOCAL_LLM=true` | `AiPort` を Ollama に切り替え |
+| `OLLAMA_HOST` | 既定 `http://127.0.0.1:11434` |
+| `OLLAMA_MODEL` | 既定 `llama3.2`。**IFC STEP 生成**では `qwen2.5-coder:7b` を推奨（`npm run dev:mock:ollama:qwen -w packages/backend`） |
+| `OLLAMA_NUM_CTX` | チャットのコンテキスト長（既定 **8192**）。長い STEP が途中で切れるときは **16384** や **32768** を試す |
+| `OLLAMA_TIMEOUT_MS` | `/api/chat` の待ち時間ミリ秒（既定 **600000** = 10 分）。CPU や大モデルでは 180s では足りないことがある |
+| `OLLAMA_TIMEOUT_SECONDS` | 上記と同じ意味で秒指定（`OLLAMA_TIMEOUT_MS` より優先度は **低い** — 両方あるときは `OLLAMA_TIMEOUT_MS` を使う） |
 
 ```bash
-USE_LOCAL_LLM=true MOCK_AWS=true npm run dev:mock -w packages/backend
+# Ollama + 既定モデル（OLLAMA_MODEL 未指定なら llama3.2）
+npm run dev:mock:ollama -w packages/backend
+
+# Ollama + qwen2.5-coder:7b（IFC 生成向けに推奨・pull 済みならこれ）
+npm run dev:mock:ollama:qwen -w packages/backend
+
+# 同等（モデルだけ変える例）
+OLLAMA_MODEL=qwen2.5-coder:7b USE_LOCAL_LLM=true MOCK_AWS=true npm run dev:mock -w packages/backend
 ```
+
+フロントの **AI IFC Generation**（`/ai-generate`）から `POST /api/ai/generate` を呼び出します。Ollama が不正な出力を返すと **502** とエラーメッセージになります（STEP ブロック抽出に失敗した場合など）。**形状表現が無い**（ビューアで見えない）だけの STEP のときは、バックエンドが **同じ viewer-safe テッセレーション IFC** にフォールバックし、最低限 3D が表示されます。
 
 本番品質・長文 STEP の安定性は **Bedrock Claude 4.5 Sonnet** 側が有利な想定です。Ollama は **オフライン検証と開発速度**向けです。
 

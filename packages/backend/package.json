@@ -5,6 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "dev:mock": "MOCK_AWS=true npx tsx watch src/dev.ts",
+    "dev:mock:ollama": "MOCK_AWS=true USE_LOCAL_LLM=true npx tsx watch src/dev.ts",
+    "dev:mock:ollama:qwen": "MOCK_AWS=true USE_LOCAL_LLM=true OLLAMA_MODEL=qwen2.5-coder:7b npx tsx watch src/dev.ts",
     "dev:aws": "npx tsx watch src/dev.ts",
     "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js",
     "test": "MOCK_AWS=true vitest run",

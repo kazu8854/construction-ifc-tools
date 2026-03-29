@@ -9,11 +9,11 @@ import { GraphQaRequestSchema } from '@construction-ifc-tools/shared';
 // In mock: queries local JSON graph, then uses MockAI for response.
 
 import { MockGraphAdapter } from '../adapters/mock-graph-adapter';
-import { MockAiAdapter } from '../adapters/mock-ai-adapter';
+import { createAiPort } from '../adapters/resolve-ai-port';
 
 const isMock = process.env.MOCK_AWS === 'true';
 const graph: GraphPort = isMock ? new MockGraphAdapter() : new MockGraphAdapter(); // TODO: replace with NeptuneAdapter
-const ai: AiPort = isMock ? new MockAiAdapter() : new MockAiAdapter(); // TODO: replace with BedrockAdapter
+const ai: AiPort = createAiPort();
 
 export const graphQaApp = new Hono()
   // POST /api/graph/qa - Ask a question about IFC data
@@ -34,7 +34,13 @@ export const graphQaApp = new Hono()
     const summary = await graph.getSummary(fileId);
     const graphContext = JSON.stringify(summary);
 
-    const answer = await ai.answerQuestion(question, graphContext);
+    let answer: string;
+    try {
+      answer = await ai.answerQuestion(question, graphContext);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'AI answer failed';
+      return c.json({ success: false, error: msg }, 502);
+    }
     return c.json({
       success: true,
       data: {

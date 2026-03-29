@@ -10,12 +10,12 @@ import { AiGenerateRequestSchema } from '@construction-ifc-tools/shared';
 // In mock: returns a hardcoded sample IFC immediately.
 // Optional: Ollama (local LLM) for richer offline experience.
 
-import { MockAiAdapter } from '../adapters/mock-ai-adapter';
+import { createAiPort } from '../adapters/resolve-ai-port';
 import { MockMetadataDbAdapter } from '../adapters/mock-metadata-db-adapter';
 import { MockStorageAdapter } from '../adapters/mock-storage-adapter';
 
 const isMock = process.env.MOCK_AWS === 'true';
-const ai: AiPort = isMock ? new MockAiAdapter() : new MockAiAdapter(); // TODO: replace with BedrockAdapter
+const ai: AiPort = createAiPort(); // Mock | Ollama (USE_LOCAL_LLM) | later Bedrock
 const metadataDb: MetadataDbPort = isMock ? new MockMetadataDbAdapter() : new MockMetadataDbAdapter();
 const storage: StoragePort = isMock ? new MockStorageAdapter() : new MockStorageAdapter();
 
@@ -30,9 +30,13 @@ export const aiGenerateApp = new Hono()
 
     const { prompt, fileName } = parsed.data;
 
-    // In mock mode: synchronous for simplicity.
-    // In production: this would return 202 and process asynchronously via Lambda + AppSync Events.
-    const ifcContent = await ai.generateIfc(prompt);
+    let ifcContent: string;
+    try {
+      ifcContent = await ai.generateIfc(prompt);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'AI generation failed';
+      return c.json({ success: false, error: msg }, 502);
+    }
     const buffer = Buffer.from(ifcContent, 'utf-8');
     const name = fileName || `ai-generated-${Date.now()}.ifc`;
     const storageKey = `ifc/ai/${Date.now()}_${name}`;

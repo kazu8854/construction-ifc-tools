@@ -271,9 +271,7 @@ async function createEngine(container: HTMLElement): Promise<EngineApi> {
         await ifcLoader.load(data, true, modelName);
       } catch (e) {
         const hint =
-          data.byteLength < 2048
-            ? ' ファイルが極端に小さいか、テスト用のダミーです。実 IFC（File Manager から正しい .ifc）を試してください。'
-            : '';
+          ' 3D 形状表現（押出し・テッセレーション等）が無い IFC や、不正な STEP ではビューアが空になることがあります。';
         const msg = e instanceof Error ? e.message : String(e);
         throw new Error(`IFC の解析に失敗しました: ${msg}.${hint}`);
       }
