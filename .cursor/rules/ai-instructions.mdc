@@ -1,0 +1,10 @@
+---
+description: Follow AI_INSTRUCTIONS.md for all repo work
+alwaysApply: true
+---
+
+# AI instructions (source of truth)
+
+All AI-assisted coding and configuration for this repository **must follow** `AI_INSTRUCTIONS.md` at the repository root. That file defines architecture (hexagonal backend, ports/adapters, Hono, mock FS under `./mock-storage/`), domain-add steps, test stacks (Jest for CDK, Vitest elsewhere), IFC tooling (`web-ifc`, `@thatopen/components`), shared models in `packages/shared`, workspaces, and auth/infra constraints.
+
+Before substantial changes, read or @-mention `AI_INSTRUCTIONS.md`. **Do not** suggest generic architectural changes that violate it without explicit user approval.

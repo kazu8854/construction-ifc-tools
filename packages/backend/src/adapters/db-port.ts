@@ -1,4 +1,4 @@
-import { User, CreateUserRequest } from '@basic-serverless-app/shared';
+import type { User, CreateUserRequest } from '@construction-ifc-tools/shared';
 
 // Port (Interface) definition for the Hexagonal Architecture.
 // All database access MUST go through this interface.

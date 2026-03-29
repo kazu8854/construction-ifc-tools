@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { CreateUserSchema } from '@basic-serverless-app/shared';
+import { CreateUserSchema } from '@construction-ifc-tools/shared';
 import { MockDbAdapter } from '../adapters/mock-db-adapter';
 import { UserUsecase } from '../usecases/user-usecase';
 

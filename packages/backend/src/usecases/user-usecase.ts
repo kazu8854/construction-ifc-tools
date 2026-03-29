@@ -1,4 +1,4 @@
-import { User, CreateUserRequest, ApiResponse } from '@basic-serverless-app/shared';
+import type { User, CreateUserRequest, ApiResponse } from '@construction-ifc-tools/shared';
 import { DbPort } from '../adapters/db-port';
 
 /**

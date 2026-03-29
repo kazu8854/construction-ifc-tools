@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@construction-ifc-tools/backend": "^1.0.0",
+    "@construction-ifc-tools/shared": "*",
     "@cloudscape-design/components": "^3.0.1255",
     "@cloudscape-design/global-styles": "^1.0.54",
     "hono": "^4.12.9",

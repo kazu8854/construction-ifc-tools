@@ -58,6 +58,7 @@ When adding a new feature domain (e.g., "reports", "schedules"), follow this exa
 ## 7. Infrastructure as Code
 * MUST use **AWS CDK** (`packages/infrastructure`).
 * Use `cdk watch` for development iteration.
+* **Status**: The CDK stacks and production deploy path are **still under construction**; treat AWS deployment as WIP and prefer **Mock/local** (`MOCK_AWS=true`) as the default dev story until the README/infrastructure package says otherwise.
 
 ## 8. Shared Resources
 * **`packages/shared`**: ALL domain models, API types, and Zod schemas MUST be defined here.

@@ -15,4 +15,6 @@ export type { AiGenerateRequest, AiJobStatus, GraphQaRequest, GraphQaResponse } 
 
 // Legacy: User model (from template, keep for auth)
 export { UserSchema, CreateUserSchema } from './models/user';
-export type { User, CreateUser } from './models/user';
+export type { User, CreateUserRequest } from './models/user';
+
+export type { ApiResponse, PaginatedResponse } from './api/responses';

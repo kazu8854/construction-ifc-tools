@@ -2,6 +2,16 @@
 
 建設業界向けのIFC（Industry Foundation Classes）ファイル統合管理・3D可視化・AI分析ソリューション。
 
+> **AWS 上のインフラ（CDK）は 🚧 工事中です。**  
+> `packages/infrastructure` のスタック設計・リソース配線・本番デプロイ手順はまだ確定していません。S3 / DynamoDB / API Gateway / Lambda / Cognito / Bedrock / Neptune などへの実装は進行中で、**現時点ではローカル Mock モードでの開発・検証を主**にしてください。AWS に載せたい場合は CDK コードと AWS アカウント側の前提を自分で確認したうえで扱ってください。
+
+## インフラ・デプロイの状態
+
+| 対象 | 状態 | メモ |
+|------|------|------|
+| ローカル（Mock / `MOCK_AWS=true`） | 利用可 | 下記 Getting Started。AWS 通信なし。 |
+| AWS（`packages/infrastructure` / CDK） | 🚧 工事中 | スタック・デプロイは未完成。`cdk synth` / `cdk deploy` は自己責任。 |
+
 ## 機能概要
 
 | Phase | 機能 | 状態 |
@@ -22,7 +32,7 @@ packages/
 ├── frontend/        # React + Vite + Cloudscape Design System
 │   ├── pages/       # FileManager, Viewer, AiGenerate, GraphQA
 │   └── api/         # Hono RPC Client (End-to-End Type Safety)
-└── infrastructure/  # AWS CDK
+└── infrastructure/  # AWS CDK（🚧 本番スタックは工事中）
 ```
 
 ### 技術スタック
@@ -35,7 +45,7 @@ packages/
 | 3D Rendering | @thatopen/components + Three.js |
 | AI | Bedrock Claude 4.5 Sonnet / Ollama (Optional Local) |
 | GraphDB | Neptune Serverless / Local JSON (Mock) |
-| IaC | AWS CDK (TypeScript) |
+| IaC | AWS CDK (TypeScript) ※スタックは工事中 |
 | テスト | Vitest (App) / Jest (CDK) |
 | 型安全 | Hono RPC + Zod |
 

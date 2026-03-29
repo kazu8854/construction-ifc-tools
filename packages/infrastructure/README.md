@@ -1,14 +1,19 @@
-# Welcome to your CDK TypeScript project
+# Infrastructure (AWS CDK)
 
-This is a blank project for CDK development with TypeScript.
+このパッケージは **Construction IFC Tools** 用の AWS インフラ（CDK TypeScript）です。
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## ステータス: 🚧 工事中
 
-## Useful commands
+本番向けスタックの構成・リソース配線・デプロイ手順は **未完成** です。リポジトリルートの [README.md](../../README.md) に、AWS 側が工事中である旨とローカル Mock 推奨が書いてあります。
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
+開発の主戦場は現状 **`MOCK_AWS=true` のローカルバックエンド／フロント** です。
+
+## CDK 開発時のコマンド例
+
+* `npm run build` — TypeScript コンパイル
+* `npm run watch` — ウォッチビルド
+* `npm run test` — Jest ユニットテスト
+* `npx cdk synth` — CloudFormation テンプレート生成（中身の確認用）
+* `npx cdk diff` / `npx cdk deploy` — **スタックが整ってから** 本番／検証アカウントで利用
+
+`cdk.json` が CDK Toolkit の実行方法を指定します。

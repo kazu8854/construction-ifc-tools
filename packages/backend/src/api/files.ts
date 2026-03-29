@@ -19,6 +19,10 @@ const isMock = process.env.MOCK_AWS === 'true';
 const metadataDb: MetadataDbPort = isMock ? new MockMetadataDbAdapter() : new MockMetadataDbAdapter(); // TODO: replace with DynamoDbAdapter
 const storage: StoragePort = isMock ? new MockStorageAdapter() : new MockStorageAdapter(); // TODO: replace with S3Adapter
 
+function assertIfcExtension(fileName: string): boolean {
+  return fileName.toLowerCase().endsWith('.ifc');
+}
+
 export const filesApp = new Hono()
   // GET /api/files - List all IFC files
   .get('/', async (c) => {
@@ -26,22 +30,44 @@ export const filesApp = new Hono()
     return c.json({ success: true, data: files }, 200);
   })
 
-  // GET /api/files/:id - Get single file metadata
-  .get('/:id', async (c) => {
-    const file = await metadataDb.getFile(c.req.param('id'));
-    if (!file) return c.json({ success: false, error: 'File not found' }, 404);
-    return c.json({ success: true, data: file }, 200);
-  })
-
-  // POST /api/files/upload - Upload an IFC file
+  // POST /api/files/upload — before /:id so paths like "upload" are not captured as ids
   .post('/upload', async (c) => {
-    // TODO: Implement multipart form data parsing for file upload
-    // For now, accept JSON with base64 encoded content
-    const body = await c.req.json();
-    const { fileName, content } = body as { fileName: string; content: string };
-    
-    const buffer = Buffer.from(content, 'base64');
-    const storageKey = `ifc/${Date.now()}_${fileName}`;
+    let fileName: string;
+    let buffer: Buffer;
+
+    const ct = c.req.header('content-type') ?? '';
+    if (ct.includes('multipart/form-data')) {
+      const form = await c.req.formData();
+      const entry = form.get('file');
+      if (!entry || typeof entry === 'string') {
+        return c.json({ success: false, error: 'Missing multipart field "file"' }, 400);
+      }
+      const blob = entry as File;
+      fileName = blob.name || 'upload.ifc';
+      buffer = Buffer.from(await blob.arrayBuffer());
+    } else {
+      let body: { fileName?: string; content?: string };
+      try {
+        body = await c.req.json();
+      } catch {
+        return c.json(
+          { success: false, error: 'Send multipart/form-data with field "file", or JSON { fileName, content } (base64)' },
+          400,
+        );
+      }
+      const { fileName: fn, content } = body;
+      if (!fn || !content) {
+        return c.json({ success: false, error: 'JSON body must include fileName and content (base64)' }, 400);
+      }
+      fileName = fn;
+      buffer = Buffer.from(content, 'base64');
+    }
+
+    if (!assertIfcExtension(fileName)) {
+      return c.json({ success: false, error: 'Only .ifc files are accepted' }, 400);
+    }
+
+    const storageKey = `ifc/${Date.now()}_${fileName.replace(/[/\\]/g, '_')}`;
     await storage.saveFile(storageKey, buffer);
 
     const record = await metadataDb.createFile({
@@ -53,6 +79,13 @@ export const filesApp = new Hono()
     });
 
     return c.json({ success: true, data: record }, 201);
+  })
+
+  // GET /api/files/:id - Get single file metadata
+  .get('/:id', async (c) => {
+    const file = await metadataDb.getFile(c.req.param('id'));
+    if (!file) return c.json({ success: false, error: 'File not found' }, 404);
+    return c.json({ success: true, data: file }, 200);
   })
 
   // PATCH /api/files/:id/rename - Rename file

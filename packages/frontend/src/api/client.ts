@@ -1,8 +1,8 @@
 import { hc } from 'hono/client';
-import type { AppType } from '@basic-serverless-app/backend';
+import type { AppType } from '@construction-ifc-tools/backend';
 
-// The backend URL. In mock mode, this points to the local mock dev server.
-const BACKEND_URL = import.meta.env.VITE_MOCK_AWS === 'true'
+/** Base URL for the Hono API (RPC client and manual fetch e.g. multipart upload). */
+export const BACKEND_URL = import.meta.env.VITE_MOCK_AWS === 'true'
   ? 'http://localhost:3001'
   : import.meta.env.VITE_API_URL || '';
 

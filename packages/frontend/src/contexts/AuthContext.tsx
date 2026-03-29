@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { User } from '@basic-serverless-app/shared';
+import type { User } from '@construction-ifc-tools/shared';
 
 // Auth Context definitions
 interface AuthContextType {

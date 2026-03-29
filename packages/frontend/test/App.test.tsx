@@ -8,11 +8,11 @@ import { expect } from 'vitest';
 expect.extend(matchers);
 
 describe('App Components Test (Vitest + React Testing Library)', () => {
-  it('renders Layout and Dashboard on mount', () => {
+  it('renders Layout and home dashboard on mount', () => {
     render(<App />);
-    expect(screen.getAllByText(/Serverless App Boilerplate/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Dashboard/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Welcome to your new enterprise architecture/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Construction IFC Tools/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: /概要/i })).toBeInTheDocument();
+    expect(screen.getByText(/IFC \(Industry Foundation Classes\)/i)).toBeInTheDocument();
   });
 
   // Example of isolated UI testing without AWS backend dependencies
