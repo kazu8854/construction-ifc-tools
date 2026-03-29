@@ -17,7 +17,7 @@
 | Phase | 機能 | 状態 |
 |-------|------|------|
 | Phase 1 | IFCファイル管理 (Upload/List/Rename/Delete) | ✅ Mock/ローカル対応 |
-| Phase 2 | 3D Viewer (web-ifc + Three.js + 要素検索/ハイライト) | 🚧 スケルトン |
+| Phase 2 | 3D Viewer (web-ifc + Three.js + 要素検索/ハイライト) | ✅ Mock/ローカル対応 |
 | Phase 3 | AI IFC生成 (Bedrock Claude 4.5 Sonnet) | 🚧 スケルトン |
 | Phase 4 | GraphDB化 + AI Q&A (Neptune + Bedrock) | 🚧 スケルトン (Optional) |
 

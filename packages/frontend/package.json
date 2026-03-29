@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-web-ifc-wasm.mjs",
+    "predev:mock": "node scripts/copy-web-ifc-wasm.mjs",
+    "prebuild": "node scripts/copy-web-ifc-wasm.mjs",
     "dev": "vite",
     "dev:mock": "VITE_MOCK_AWS=true vite",
     "build": "vite build",
@@ -13,14 +16,19 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@construction-ifc-tools/backend": "^1.0.0",
-    "@construction-ifc-tools/shared": "*",
     "@cloudscape-design/components": "^3.0.1255",
     "@cloudscape-design/global-styles": "^1.0.54",
+    "@construction-ifc-tools/backend": "^1.0.0",
+    "@construction-ifc-tools/shared": "*",
+    "@thatopen/components": "^3.3.3",
+    "@thatopen/fragments": "~3.3.0",
+    "camera-controls": "^3.1.2",
     "hono": "^4.12.9",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.2"
+    "react-router-dom": "^7.13.2",
+    "three": "^0.175.0",
+    "web-ifc": "^0.0.77"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

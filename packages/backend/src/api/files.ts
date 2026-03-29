@@ -81,6 +81,18 @@ export const filesApp = new Hono()
     return c.json({ success: true, data: record }, 201);
   })
 
+  // GET /api/files/:id/download — IFC バイナリ（Viewer 用）。`/:id` より前に定義
+  .get('/:id/download', async (c) => {
+    const id = c.req.param('id');
+    const file = await metadataDb.getFile(id);
+    if (!file) return c.json({ success: false, error: 'File not found' }, 404);
+    const buf = await storage.getFile(file.storageKey);
+    return c.body(new Uint8Array(buf), 200, {
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `inline; filename="${file.name.replace(/"/g, '')}"`,
+    });
+  })
+
   // GET /api/files/:id - Get single file metadata
   .get('/:id', async (c) => {
     const file = await metadataDb.getFile(c.req.param('id'));

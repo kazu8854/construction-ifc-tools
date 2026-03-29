@@ -50,4 +50,24 @@ describe('Files API (integration)', () => {
     });
     expect(res.status).toBe(400);
   });
+
+  it('GET /api/files/:id/download returns binary', async () => {
+    const content = Buffer.from('ISO-10303-21;').toString('base64');
+    const up = await app.request('/api/files/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: 'dl-test.ifc', content }),
+    });
+    const created = (await up.json()) as { data: { id: string } };
+    const id = created.data.id;
+
+    const dl = await app.request(`/api/files/${id}/download`);
+    expect(dl.status).toBe(200);
+    const ct = dl.headers.get('content-type') ?? '';
+    expect(ct).toContain('octet-stream');
+    const body = new Uint8Array(await dl.arrayBuffer());
+    expect(body.length).toBeGreaterThan(0);
+
+    await app.request(`/api/files/${id}`, { method: 'DELETE' });
+  });
 });
