@@ -17,9 +17,18 @@
 | Phase | 機能 | 状態 |
 |-------|------|------|
 | Phase 1 | IFCファイル管理 (Upload/List/Rename/Delete) | ✅ Mock/ローカル対応 |
-| Phase 2 | 3D Viewer (web-ifc + Three.js + 要素検索/ハイライト) | ✅ Mock/ローカル対応 |
+| Phase 2 | 3D Viewer（That Open + 検索連動表示） | ✅ Mock/ローカル対応 |
 | Phase 3 | AI IFC生成 (Bedrock Claude 4.5 Sonnet) | 🚧 スケルトン |
 | Phase 4 | GraphDB化 + AI Q&A (Neptune + Bedrock) | 🚧 スケルトン (Optional) |
+
+### Phase 2（3D Viewer）でできること
+
+- **File Manager で選んだ IFC** を Viewer で読み込み（`GET /api/files/:id/download`）。
+- **カメラ**: 左ドラッグでオービット、ホイールでズーム（`@thatopen/components` + CameraControls）。
+- **IFC タイプ名の部分一致検索** → ヒット一覧（ページング・文字絞り込み）と **IFC 種別ごとのチェック**で、3D を **絞り込み表示** または **全体のままハイライト**。
+- **web-ifc WASM** は `predev` / `prebuild` で `public/web-ifc/` にコピー（`packages/frontend/scripts/copy-web-ifc-wasm.mjs`）。
+
+階層ツリーによるナビゲーションや GraphDB 連携は **Phase 4** 以降の想定。
 
 ## アーキテクチャ
 
@@ -31,6 +40,7 @@ packages/
 │   └── api/         # ドメイン別ルート (files, ai-generate, graph-qa)
 ├── frontend/        # React + Vite + Cloudscape Design System
 │   ├── pages/       # FileManager, Viewer, AiGenerate, GraphQA
+│   ├── components/  # Layout, ifc/IfcViewerCanvas など
 │   └── api/         # Hono RPC Client (End-to-End Type Safety)
 └── infrastructure/  # AWS CDK（🚧 本番スタックは工事中）
 ```
@@ -42,7 +52,7 @@ packages/
 | Frontend | React + Vite + Cloudscape + react-router-dom |
 | Backend | Hono (Lambda / @hono/node-server) |
 | IFC Parser | web-ifc (WASM) |
-| 3D Rendering | @thatopen/components + Three.js |
+| 3D Rendering | @thatopen/components + @thatopen/fragments + Three.js |
 | AI | Bedrock Claude 4.5 Sonnet / Ollama (Optional Local) |
 | GraphDB | Neptune Serverless / Local JSON (Mock) |
 | IaC | AWS CDK (TypeScript) ※スタックは工事中 |
@@ -63,16 +73,27 @@ npm install
 ```
 
 ### ローカル起動（Mockモード）
+
+**Viewer で IFC を開くには、バックエンドとフロントの両方が必要です**（一覧 API とファイルダウンロード API）。
+
 ```bash
-# バックエンド (http://localhost:3001)
+# ターミナル1: バックエンド (http://localhost:3001)
 npm run dev:mock -w packages/backend
 
-# フロントエンド (http://localhost:5173)
+# ターミナル2: フロントエンド (http://localhost:5173)
 npm run dev:mock -w packages/frontend
 ```
 
-環境変数 `MOCK_AWS=true` / `VITE_MOCK_AWS=true` が自動設定されます。
+環境変数 `MOCK_AWS=true` / `VITE_MOCK_AWS=true` が自動設定されます。  
 AWSリソースへの通信は一切発生しません。
+
+**API の向き先（フロント）**
+
+| 状況 | 挙動 |
+|------|------|
+| `VITE_MOCK_AWS=true`（`dev:mock`） | `BACKEND_URL` → `http://localhost:3001`（CORS 直叩き） |
+| `dev` のみ（Mock なし） | 相対 `/api/*` → Vite proxy が 3001 へ転送（`vite.config.ts`） |
+| `VITE_API_URL` 指定 | その URL を最優先 |
 
 ### Mock時のデータ永続化
 Mockモードでは以下にデータが永続化されます（プロセス再起動後もデータは残ります）：
