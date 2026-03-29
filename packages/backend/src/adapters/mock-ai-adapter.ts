@@ -2,8 +2,7 @@ import type { AiPort } from './ai-port';
 
 // === Mock AI Adapter ===
 // Returns a hardcoded minimal IFC file for development/testing.
-// For a richer offline experience, install Ollama and set USE_LOCAL_LLM=true.
-// See README.md for Ollama setup instructions.
+// Ollama: see README (Phase 3). USE_LOCAL_LLM + OllamaAiAdapter are not wired yet.
 
 // Minimal valid IFC2x3 file: a single wall
 const SAMPLE_IFC = `ISO-10303-21;

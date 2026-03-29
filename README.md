@@ -18,7 +18,7 @@
 |-------|------|------|
 | Phase 1 | IFCファイル管理 (Upload/List/Rename/Delete) | ✅ Mock/ローカル対応 |
 | Phase 2 | 3D Viewer（That Open + 検索連動表示） | ✅ Mock/ローカル対応 |
-| Phase 3 | AI IFC生成 (Bedrock Claude 4.5 Sonnet) | 🚧 スケルトン |
+| Phase 3 | AI IFC生成（本番: Bedrock / ローカル: Ollama 想定） | 🚧 Mock 固定 IFC のみ（Ollama アダプタは未接続） |
 | Phase 4 | GraphDB化 + AI Q&A (Neptune + Bedrock) | 🚧 スケルトン (Optional) |
 
 ### Phase 2（3D Viewer）でできること
@@ -29,6 +29,16 @@
 - **web-ifc WASM** は `predev` / `prebuild` で `public/web-ifc/` にコピー（`packages/frontend/scripts/copy-web-ifc-wasm.mjs`）。
 
 階層ツリーによるナビゲーションや GraphDB 連携は **Phase 4** 以降の想定。
+
+### Phase 3（AI IFC 生成）の進め方
+
+| モード | 内容 | 状態 |
+|--------|------|------|
+| **Mock** | `POST /api/ai/generate` はプロンプトに関わらず **固定のミニ IFC** を返し、ストレージに保存する | ✅ 利用可 |
+| **Ollama（ローカル LLM）** | 同一 API で **実生成**するための環境。バックエンドの `AiPort` に Ollama 実装を差し込む | 🚧 環境は README 手順で用意可／**コード未接続** |
+| **Bedrock** | Claude 4.5 Sonnet（本番想定） | 🚧 未配線 |
+
+先に **Ollama を入れておき**、続く実装で `USE_LOCAL_LLM` 等から切り替えられるようにする想定です。
 
 ## アーキテクチャ
 
@@ -114,22 +124,66 @@ npm run test:coverage -w packages/backend
 npm run test:coverage -w packages/frontend
 ```
 
-## Optional: ローカルLLM (Ollama)
+## Ollama の導入（Phase 3・ローカル LLM 検証用）
 
-AI生成機能をオフラインでも動かしたい場合、Ollamaを利用できます。
+[Ollama](https://ollama.com/) は LLM を **ローカルの HTTP API**（既定 `http://127.0.0.1:11434`）として動かすツールです。AWS Bedrock なしで **生成品質の試行**や **プロンプト設計**をしたいときに使います。
+
+> **現状のコード**: `POST /api/ai/generate` は **Mock の固定 IFC** のみです。環境変数 `USE_LOCAL_LLM` は **バックエンドにまだ配線されていません**（Ollama 用 `AiPort` 実装は Phase 3 の続き）。以下は **先に環境だけ整える**ための手順です。
+
+### 1. インストール
+
+| 環境 | 手順 |
+|------|------|
+| **公式ダウンロード** | https://ollama.com/download（Windows / macOS / Linux インストーラ） |
+| **Linux / WSL** | `curl -fsSL https://ollama.com/install.sh \| sh` |
+| **macOS（Homebrew）** | `brew install ollama` |
+
+### 2. サービス起動
+
+インストール直後は多くの環境で **バックグラウンド起動**されます。応答がない場合は別ターミナルで:
 
 ```bash
-# Ollamaインストール
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# モデルダウンロード
-ollama pull llama3.2
-
-# ローカルLLMモードで起動
-USE_LOCAL_LLM=true npm run dev:mock -w packages/backend
+ollama serve
 ```
 
-> **Note**: ローカルLLMはMockの代替として使えますが、IFC STEP構文の生成品質はBedrock Claude 4.5 Sonnetの方が圧倒的に高いです。本番品質の生成にはAWSデプロイが推奨です。
+### 3. モデル取得
+
+```bash
+# 比較的軽量（README従来の例）
+ollama pull llama3.2
+
+# STEP のような構造化テキスト生成を試す場合の例（任意・マシンスペックに応じて）
+# ollama pull qwen2.5-coder:7b
+# ollama pull codellama
+```
+
+### 4. 動作確認
+
+```bash
+curl -s http://127.0.0.1:11434/api/tags
+# 対話テスト: ollama run llama3.2 "Hello"
+```
+
+### 5. 生成 API（HTTP）の簡易テスト
+
+```bash
+curl -s http://127.0.0.1:11434/api/generate -d '{
+  "model": "llama3.2",
+  "prompt": "Say one sentence about IFC.",
+  "stream": false
+}' -H "Content-Type: application/json"
+```
+
+### 6. バックエンド連携（予定）
+
+- **想定環境変数**: `USE_LOCAL_LLM=true`、必要なら `OLLAMA_HOST`（既定 `http://127.0.0.1:11434`）、`OLLAMA_MODEL`（例: `llama3.2`）
+- **想定起動例**（アダプタ実装後）:
+
+```bash
+USE_LOCAL_LLM=true MOCK_AWS=true npm run dev:mock -w packages/backend
+```
+
+本番品質・長文 STEP の安定性は **Bedrock Claude 4.5 Sonnet** 側が有利な想定です。Ollama は **オフライン検証と開発速度**向けです。
 
 ## Future Enhancements
 
